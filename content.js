@@ -18,11 +18,16 @@
     autoFill: true
   };
 
+  const LABELS = new Set(['SKU Shop nội địa', ...MARKETS.map(m => `${m.short} Giá`)]);
+
   let settings = structuredClone(DEFAULTS);
   let rates = null;
   let filling = false;
   let scanTimer = null;
+  let lateScanTimer = null;
   let lastFillKey = '';
+  let lastFilledLocalInput = null;
+  let fieldCache = null;
   let panel, vndInput, resultsEl, rateStatusEl, sourceEl, autoSyncEl, autoFillEl, fillStatusEl;
 
   const num = value => Number(String(value ?? '').replace(/[^0-9.]/g, '')) || 0;
@@ -44,22 +49,27 @@
 
   function visible(el) {
     if (!(el instanceof HTMLElement)) return false;
-    const s = getComputedStyle(el);
-    return s.display !== 'none' && s.visibility !== 'hidden' && el.offsetParent !== null;
+    return el.offsetParent !== null;
   }
 
-  function leafWithText(text) {
-    return [...document.querySelectorAll('body *')].filter(el =>
-      !el.closest('#merly-convert-root') &&
-      visible(el) &&
-      el.children.length === 0 &&
-      el.textContent?.trim() === text
-    );
+  function collectLabels() {
+    const found = new Map();
+    const nodes = document.querySelectorAll('label, span, div, p');
+    for (const el of nodes) {
+      if (found.size === LABELS.size) break;
+      if (el.closest('#merly-convert-root')) continue;
+      if (el.children.length !== 0) continue;
+      const text = el.textContent?.trim();
+      if (!LABELS.has(text) || found.has(text)) continue;
+      if (!visible(el)) continue;
+      found.set(text, el);
+    }
+    return found;
   }
 
   function inputNear(label) {
     let node = label?.parentElement;
-    for (let depth = 0; node && depth < 6; depth++, node = node.parentElement) {
+    for (let depth = 0; node && depth < 5; depth++, node = node.parentElement) {
       const inputs = [...node.querySelectorAll('input')].filter(i =>
         i instanceof HTMLInputElement && !i.disabled && !i.readOnly && visible(i) &&
         !['checkbox', 'radio', 'hidden', 'file'].includes((i.type || 'text').toLowerCase())
@@ -75,16 +85,30 @@
     return null;
   }
 
-  function inputByLabel(text) {
-    for (const label of leafWithText(text)) {
+  function scanFields() {
+    const labels = collectLabels();
+    const localLabel = labels.get('SKU Shop nội địa') || null;
+    const localInput = inputNear(localLabel);
+    const marketInputs = new Map();
+
+    for (const market of MARKETS) {
+      const label = labels.get(`${market.short} Giá`);
       const input = inputNear(label);
-      if (input) return input;
+      if (input) marketInputs.set(market.code, input);
     }
-    return null;
+
+    fieldCache = { labels, localInput, marketInputs, at: Date.now() };
+    return fieldCache;
   }
 
-  const localPriceInput = () => inputByLabel('SKU Shop nội địa');
-  const marketInput = market => inputByLabel(`${market.short} Giá`);
+  function getFields(fresh = false) {
+    if (fresh || !fieldCache || Date.now() - fieldCache.at > 1500) return scanFields();
+    return fieldCache;
+  }
+
+  function invalidateFields() {
+    fieldCache = null;
+  }
 
   function setReactInput(input, value) {
     const old = input.value;
@@ -114,16 +138,19 @@
     fillStatusEl.className = `merly-fill-status ${type}`.trim();
   }
 
-  function fillMarkets(force = false) {
+  function fillMarkets(force = false, fields = getFields()) {
     if (filling || !rates) return;
     const vnd = vndNum(vndInput.value || settings.lastVnd);
     if (!vnd) return setFillStatus('Chưa có giá VND.', 'warn');
 
-    const found = MARKETS.map(m => ({ market: m, input: marketInput(m) })).filter(x => x.input);
+    const found = MARKETS
+      .map(market => ({ market, input: fields.marketInputs.get(market.code) }))
+      .filter(x => x.input);
+
     if (!found.length) return setFillStatus('Chưa thấy ô giá MY/SG/PH/TH/TW.', 'warn');
 
     const key = `${location.pathname}|${vnd}|${settings.useAdjustment}|${MARKETS.map(m => settings.adjustments?.[m.code] || 0).join(',')}`;
-    if (!force && key === lastFillKey) return;
+    if (!force && key === lastFillKey && fields.localInput === lastFilledLocalInput) return;
 
     filling = true;
     let changed = 0;
@@ -139,33 +166,34 @@
         setTimeout(() => input.classList.remove('merly-autofilled-input'), 1000);
       }
       lastFillKey = key;
+      lastFilledLocalInput = fields.localInput;
       setFillStatus(`Đã xử lý ${found.length}/5 thị trường${changed ? ` · cập nhật ${changed} ô` : ''}.`, 'ok');
     } finally {
       setTimeout(() => { filling = false; }, 30);
     }
-    renderInlineHints();
+    renderInlineHints(fields);
   }
 
-  function renderInlineHints() {
+  function renderInlineHints(fields = fieldCache) {
     document.querySelectorAll('.merly-inline-hint, .merly-inline-box').forEach(el => el.remove());
     const vnd = vndNum(vndInput.value || settings.lastVnd);
-    if (!vnd || !rates) return;
+    if (!vnd || !rates || !fields?.labels) return;
 
-    for (const m of MARKETS) {
-      const value = converted(vnd, m);
-      for (const label of leafWithText(`${m.short} Giá`)) {
-        const chip = document.createElement('span');
-        chip.className = 'merly-inline-hint';
-        chip.textContent = fmtMarket(value, m);
-        label.parentNode?.insertBefore(chip, label.nextSibling);
-      }
+    for (const market of MARKETS) {
+      const label = fields.labels.get(`${market.short} Giá`);
+      if (!label?.isConnected) continue;
+      const chip = document.createElement('span');
+      chip.className = 'merly-inline-hint';
+      chip.textContent = fmtMarket(converted(vnd, market), market);
+      label.parentNode?.insertBefore(chip, label.nextSibling);
     }
 
-    for (const label of leafWithText('SKU Shop nội địa')) {
+    const localLabel = fields.labels.get('SKU Shop nội địa');
+    if (localLabel?.isConnected) {
       const box = document.createElement('div');
       box.className = 'merly-inline-box';
       box.textContent = `Merly Convert: ${fmtVnd(vnd)}₫ → Autofill ${autoFillEl.checked ? 'BẬT' : 'TẮT'}`;
-      label.parentNode?.insertBefore(box, label.nextSibling);
+      localLabel.parentNode?.insertBefore(box, localLabel.nextSibling);
     }
   }
 
@@ -176,11 +204,12 @@
     await chrome.storage.sync.set({ merlyCurrencySettings: settings });
   }
 
-  function syncFromShopee() {
+  function syncFromShopee(fields = getFields()) {
     if (!autoSyncEl.checked || filling) return;
-    const input = localPriceInput();
+    const input = fields.localInput;
     const value = vndNum(input?.value);
     if (!input || value < 1000) return;
+
     if (vndNum(vndInput.value) !== value) {
       vndInput.value = fmtVnd(value);
       settings.lastVnd = value;
@@ -188,14 +217,33 @@
       persist();
       render();
     }
+
     sourceEl.textContent = 'Nguồn: SKU Shop nội địa';
     panel.classList.remove('merly-hidden');
-    if (autoFillEl.checked) fillMarkets();
+    renderInlineHints(fields);
+    if (autoFillEl.checked) fillMarkets(false, fields);
   }
 
-  function queueScan() {
+  function runScan() {
+    const fields = scanFields();
+    syncFromShopee(fields);
+    renderInlineHints(fields);
+  }
+
+  function queueScan(delay = 220) {
     clearTimeout(scanTimer);
-    scanTimer = setTimeout(syncFromShopee, 180);
+    scanTimer = setTimeout(runScan, delay);
+  }
+
+  function queueLateScan() {
+    clearTimeout(lateScanTimer);
+    lateScanTimer = setTimeout(runScan, 850);
+  }
+
+  function scheduleInteractionScan() {
+    invalidateFields();
+    queueScan(180);
+    queueLateScan();
   }
 
   async function loadRates(force = false) {
@@ -209,7 +257,7 @@
     const t = response.data.timestamp ? new Date(response.data.timestamp).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '';
     rateStatusEl.textContent = `${response.data.stale ? 'Cache' : 'Live'} · ${t}`;
     render();
-    syncFromShopee();
+    queueScan(60);
   }
 
   function createUI() {
@@ -244,7 +292,11 @@
     root.querySelector('#merly-convert-fab').onclick = () => panel.classList.toggle('merly-hidden');
     root.querySelector('#merly-hide-btn').onclick = () => panel.classList.add('merly-hidden');
     root.querySelector('#merly-refresh-btn').onclick = () => loadRates(true);
-    root.querySelector('#merly-fill-now').onclick = () => fillMarkets(true);
+    root.querySelector('#merly-fill-now').onclick = () => {
+      const fields = scanFields();
+      syncFromShopee(fields);
+      fillMarkets(true, fields);
+    };
 
     vndInput.addEventListener('input', async () => {
       const value = vndNum(vndInput.value);
@@ -254,14 +306,18 @@
       lastFillKey = '';
       render();
       await persist();
-      if (autoFillEl.checked) setTimeout(() => fillMarkets(), 50);
+      if (autoFillEl.checked) setTimeout(() => fillMarkets(false, getFields(true)), 80);
     });
 
     autoSyncEl.addEventListener('change', persist);
     autoFillEl.addEventListener('change', async () => {
       lastFillKey = '';
       await persist();
-      if (autoFillEl.checked) fillMarkets(true);
+      if (autoFillEl.checked) {
+        const fields = scanFields();
+        syncFromShopee(fields);
+        fillMarkets(true, fields);
+      }
     });
   }
 
@@ -279,15 +335,29 @@
     render();
     await loadRates(false);
 
-    document.addEventListener('input', event => {
-      if (filling || !autoSyncEl.checked) return;
-      if (event.target === localPriceInput()) setTimeout(syncFromShopee, 30);
+    document.addEventListener('focusin', event => {
+      if (!(event.target instanceof HTMLInputElement)) return;
+      if (event.target.closest('#merly-convert-root')) return;
+      scheduleInteractionScan();
     }, true);
 
-    new MutationObserver(() => {
-      renderInlineHints();
-      queueScan();
-    }).observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('input', event => {
+      if (filling || !autoSyncEl.checked) return;
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement) || target.closest('#merly-convert-root')) return;
+      const cached = getFields();
+      if (target === cached.localInput) {
+        setTimeout(() => syncFromShopee(cached), 20);
+      }
+    }, true);
+
+    document.addEventListener('click', event => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target || target.closest('#merly-convert-root')) return;
+      if (target.closest('button, input, [role="button"], .shopee-button')) scheduleInteractionScan();
+    }, true);
+
+    window.addEventListener('popstate', scheduleInteractionScan);
 
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'sync' || !changes.merlyCurrencySettings?.newValue) return;
@@ -297,7 +367,7 @@
       autoFillEl.checked = settings.autoFill !== false;
       lastFillKey = '';
       render();
-      queueScan();
+      queueScan(100);
     });
   }
 
