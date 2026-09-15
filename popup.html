@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Merly Currency Converter</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div>
+        <div class="brand">MERLY</div>
+        <h1>₫ Convert Asia</h1>
+      </div>
+      <button id="refreshBtn" class="icon-btn" title="Cập nhật tỷ giá">↻</button>
+    </header>
+
+    <section class="helper-note">
+      <div class="helper-icon">⇄</div>
+      <div>
+        <strong>Shopee helper</strong>
+        <small>Khi mở Shopee Seller, extension sẽ hiện bảng quy đổi nổi để bạn nhìn nhanh giá các thị trường.</small>
+      </div>
+    </section>
+
+    <section class="card input-card">
+      <label for="vndInput">Giá Việt Nam</label>
+      <div class="money-input">
+        <input id="vndInput" type="text" inputmode="numeric" autocomplete="off" placeholder="VD: 340000" />
+        <span>₫</span>
+      </div>
+      <div class="quick-values">
+        <button data-vnd="269000">269k</button>
+        <button data-vnd="319000">319k</button>
+        <button data-vnd="369000">369k</button>
+        <button data-vnd="399000">399k</button>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <label class="switch-row">
+        <span>
+          <strong>Giá Shopee điều chỉnh</strong>
+          <small>Áp dụng % riêng từng thị trường</small>
+        </span>
+        <input id="adjustToggle" type="checkbox" />
+      </label>
+    </section>
+
+    <section id="results" class="results"></section>
+
+    <section class="footer-card">
+      <div class="rate-status">
+        <span id="statusDot" class="dot"></span>
+        <span id="rateStatus">Đang tải tỷ giá...</span>
+      </div>
+      <button id="settingsBtn" class="text-btn">Cài đặt</button>
+    </section>
+
+    <section id="settingsPanel" class="settings hidden">
+      <div class="settings-head">
+        <div>
+          <strong>Cài đặt giá Shopee</strong>
+          <small>Nhập % tăng/giảm so với tỷ giá live. Ví dụ 15 = tăng 15%.</small>
+        </div>
+      </div>
+      <div id="marketSettings" class="market-settings"></div>
+      <div class="settings-actions">
+        <button id="resetBtn" class="secondary">Đặt lại 0%</button>
+        <button id="saveBtn" class="primary">Lưu</button>
+      </div>
+    </section>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
