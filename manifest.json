@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Merly VND Currency Converter",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Quy đổi giá từ VND sang MYR, SGD, PHP, THB và TWD. Hỗ trợ tỷ giá live, hệ số điều chỉnh và trợ lý hiển thị và tự động điền giá trực tiếp trên Shopee Seller.",
   "permissions": ["storage"],
   "host_permissions": ["https://open.er-api.com/*"],
