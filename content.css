@@ -1,0 +1,236 @@
+#merly-convert-root {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+#merly-convert-fab {
+  border: 0;
+  background: linear-gradient(135deg, #ee4d2d, #ff7d5d);
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(238, 77, 45, 0.25);
+  cursor: pointer;
+}
+#merly-convert-panel {
+  width: 340px;
+  margin-top: 10px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.18);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.06);
+}
+#merly-convert-panel.merly-hidden {
+  display: none;
+}
+.merly-panel-head {
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #fff4ef, #fff);
+  border-bottom: 1px solid #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.merly-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.merly-panel-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ee4d2d, #ff7d5d);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 800;
+}
+.merly-panel-title strong {
+  display: block;
+  font-size: 13px;
+  color: #222;
+}
+.merly-panel-title small,
+.merly-panel-sub,
+.merly-rate-status,
+.merly-auto-row span {
+  color: #666;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.merly-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.merly-icon-btn {
+  border: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  font-size: 14px;
+  cursor: pointer;
+}
+.merly-panel-body {
+  padding: 12px 14px 14px;
+}
+.merly-vnd-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #fff;
+}
+.merly-vnd-input:focus-within {
+  border-color: #ee4d2d;
+  box-shadow: 0 0 0 3px rgba(238,77,45,.09);
+}
+.merly-vnd-input input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  font-size: 22px;
+  font-weight: 800;
+  padding: 11px 0;
+  min-width: 0;
+}
+.merly-vnd-input span {
+  color: #777;
+  font-weight: 700;
+}
+.merly-auto-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  gap: 12px;
+}
+.merly-auto-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.merly-auto-row input[type="checkbox"] {
+  accent-color: #ee4d2d;
+}
+.merly-source {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #fff7f3;
+  border-radius: 10px;
+  color: #9a4a34;
+  font-size: 11px;
+}
+.merly-results {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.merly-result-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+.merly-market {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.merly-flag {
+  font-size: 20px;
+}
+.merly-market strong {
+  display: block;
+  font-size: 12px;
+  color: #222;
+}
+.merly-market small {
+  color: #888;
+  font-size: 11px;
+}
+.merly-amount {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 800;
+  color: #1b1b1b;
+}
+.merly-amount small {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ee4d2d;
+  margin-top: 2px;
+}
+.merly-inline-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fff3ef;
+  color: #ee4d2d;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.merly-inline-hint::before {
+  content: '⇄';
+  font-size: 10px;
+}
+.merly-inline-box {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #ee4d2d;
+  font-weight: 700;
+}
+
+.merly-autofill-row {
+  padding-top: 8px;
+  border-top: 1px dashed #eee;
+}
+.merly-fill-btn {
+  border: 0;
+  border-radius: 9px;
+  background: #ee4d2d;
+  color: #fff;
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.merly-fill-btn:hover {
+  background: #d94123;
+}
+.merly-fill-status {
+  margin-top: 7px;
+  font-size: 11px;
+  color: #777;
+}
+.merly-fill-status.ok { color: #159447; }
+.merly-fill-status.warn { color: #b36b00; }
+.merly-fill-status.error { color: #d43d3d; }
+.merly-fill-status.info { color: #666; }
+.merly-autofilled-input {
+  outline: 2px solid rgba(35, 176, 92, .45) !important;
+  box-shadow: 0 0 0 4px rgba(35, 176, 92, .08) !important;
+  transition: outline-color .2s ease, box-shadow .2s ease;
+}
